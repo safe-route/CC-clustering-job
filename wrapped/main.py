@@ -9,10 +9,13 @@ import json
 import random
 import os
 
+# Global var constant
 EPSILON = 200
 MIN_POINTS = 3
 
 ANGLE_TO_METER_RATIO = 0.00001 / 1.11
+
+# End of constant
 
 # Unit conversion
 def meter_to_angle(meter):
@@ -22,13 +25,14 @@ def meter_to_angle(meter):
 def angle_to_meter(angle):
     """Convvert angle to meter"""
     return angle / ANGLE_TO_METER_RATIO
+# End of unit conversion
 
 # Model
 def create_model(data) -> DBSCAN:
     """Creating DBSCAN model"""
     dbscan = DBSCAN(eps=meter_to_angle(EPSILON), min_samples=MIN_POINTS)
     dbscan = dbscan.fit(data)
-    
+
     return dbscan
 
 def model_centroids(model, data, raw_data):
@@ -40,7 +44,7 @@ def model_centroids(model, data, raw_data):
     colors = [tuple(plt.cm.Spectral(each)) for each in np.linspace(0, 1, len(unique_labels))]
     # Shuffle colors
     random.shuffle(colors)
-    
+
     # Calculate centroids
     return_data = {'centroids': []}
     for label in unique_labels:
@@ -68,14 +72,29 @@ def model_centroids(model, data, raw_data):
     
     return return_data
 
-def main(data):
+def create_json(centroids, filename, bucket):
+    '''
+    this function will create json object in
+    google cloud storage
+    '''
+    # create a blob
+    blob = bucket.blob(filename)
+    # upload the blob 
+    blob.upload_from_string(
+        data=json.dumps(centroids),
+        content_type='application/json'
+        )
+    result = filename + ' upload complete'
+    return {'response' : result}
+
+def main(event, context):
 
     # Init storage client and read csv in memory
     client = storage.Client()
-    bucket = client.get_bucket('gs://safe_route')
     dataset_file_read = pd.read_csv('gs://safe_route/crime_history.csv', encoding='utf-8')
     # statistic_uri
-    model_file = 'gs://safe_route/JSON File/clustering.json'# clustering_uri
+    #model_file = 'gs://safe_route/model/clustering.json'# clustering_uri
+    bucket = client.get_bucket("safe_route")
 
     data = dataset_file_read
     data = data.dropna()
@@ -88,7 +107,8 @@ def main(data):
 
     centroids = model_centroids(model, data, raw_data)
 
-     # Saving model using json
-    with open(model_file, 'w') as f:
-        json.dump(centroids, f, indent=2)
-
+    # Saving model using json
+    create_json(centroids, 'centroids.json', bucket)
+        
+if __name__ == "__main__":
+    main(event, context)
