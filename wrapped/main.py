@@ -91,7 +91,7 @@ def main(event, context):
 
     # Init storage client and read csv in memory
     client = storage.Client()
-    dataset_file_read = pd.read_csv('gs://safe_route/crime_history.csv', encoding='utf-8')
+    dataset_file_read = pd.read_csv('gs://safe-route-csv-clustering/crime_history.csv', encoding='utf-8')
     # statistic_uri
     #model_file = 'gs://safe_route/model/clustering.json'# clustering_uri
     bucket = client.get_bucket("safe_route")
