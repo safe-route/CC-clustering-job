@@ -1,3 +1,5 @@
+# IMPORTANT THIS CODE HAS BEEN REFACTORED TO clustering-from-bq
+
 # Clustering Job
 
 For clustering from source (.csv of crime data) and the write it to JSON. Potentially can be improved to be invoked automatically for seamless write and modification to database.
